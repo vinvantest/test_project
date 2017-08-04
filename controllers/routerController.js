@@ -29,9 +29,24 @@ module.exports = function(server)
     // GET http://localhost:8888/users with pagenation example
     server.get("/users", function(req, res, next)
     {
+      //get url query params
+      // http://localhost:8888/users?first=Dumy&second=Tumy
+      var urlQqueryParams = req.getQuery();//getQuery converts to a string ... we don't need another variable just to get url params
+      logger.log('info', 'url queryParams passed is -> {' + JSON.stringify(urlQqueryParams) + '} '
+                  + 'where first param is: ' + JSON.stringify(req.query.first)
+                  + 'second param is: ' + JSON.stringify(req.query.second)
+                  + 'third param is: ' + JSON.stringify(req.query.third)
+                );
+      //urlQqueryParams gets converted to a string due to req.getQuery() call
+      logger.log('info', 'var urlQqueryParams passed is -> {' + JSON.stringify(urlQqueryParams) + '} '
+                  + 'where first param is: ' + JSON.stringify(urlQqueryParams[0])
+                  + 'second param is: ' + JSON.stringify(urlQqueryParams[1])
+                  + 'third param is: ' + JSON.stringify(urlQqueryParams.third)
+                );
+
         //logger.log('debug', 'reached Get / ');
         //logger.log('debug', 'Invoking UserModel.find...');
-        var query = {};
+        var query_criteria = {};
         var options = {
           page: 1, // pass 0 or 1 for the first page
           limit: 5,
@@ -42,7 +57,7 @@ module.exports = function(server)
         };
 
         //logger.log('info', 'calling UserModel.paginate() -->');
-        UserModel.paginate(query, options, function(error, results, total, pages){
+        UserModel.paginate(query_criteria, options, function(error, results, total, pages){
         //logger.log('info', 'Inside callback UserModel.paginate() -->');
           if(error) {
             logger.log('error', 'Error: in else UserModel.paginate() --> ' + error);

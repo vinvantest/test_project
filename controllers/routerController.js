@@ -26,7 +26,7 @@ module.exports = function(server)
         //});
     });
 
-    // GET http://localhost:8888/users with pagenation
+    // GET http://localhost:8888/users with pagenation example
     server.get("/users", function(req, res, next)
     {
         //logger.log('debug', 'reached Get / ');
@@ -119,7 +119,7 @@ module.exports = function(server)
       //you can loop in the query object
       for(var field in req.query){
         logger.log('info', 'Field['+field+'] = '+req.query[field]);
-      }
+      }//for loop end
 
       UserModel.findOne({ _id: req.params.id }, function (err, user)
        {

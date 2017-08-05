@@ -46,13 +46,49 @@ module.exports = function(server)
 
         //logger.log('debug', 'reached Get / ');
         //logger.log('debug', 'Invoking UserModel.find...');
+        /*
+
+        SOME PAGINATION example
+
+        // populating more than one ref
+        MySchema.paginate({}, {
+          page: 2,
+          limit: 10,
+          columns: 'title',
+          populate: [ 'some_ref', 'other_ref' ],
+          sortBy: {
+            title: -1
+          },
+          lean: true
+        }, callback);
+
+        // selecting specific field for population
+        // <http://mongoosejs.com/docs/api.html#query_Query-populate>
+        MySchema.paginate({}, {
+          columns: 'title',
+          populate: [
+            {
+              path: 'some_ref',
+              select: 'field_a field_b',
+              options: {sort: {field_c: 'asc'}}
+            },
+            'other_ref'
+          ],
+          sortBy: {
+            title: -1 //1
+          },
+          lean: true
+        }, callback);
+
+        */
+
         var query_criteria = {};
         var options = {
           page: 1, // pass 0 or 1 for the first page
           limit: 5,
           lean: true,
-          sortBy: 'first_name',
-          columns: 'career last_name first_name'
+          sortBy: {'updated_at': -1}, //sortBy value can be -1 = descending (latest updated_at) or 1 = ascending
+          columns: 'career last_name first_name created_at updated_at'
           //populate: 'first_name' //throwing castbyId error
         };
 
@@ -161,7 +197,7 @@ module.exports = function(server)
       req.assert('first_name', 'First name is required').notEmpty();
       req.assert('last_name', 'Last name is required').notEmpty();
       req.assert('email_address', 'Email address is required and must be a valid email').notEmpty().isEmail();
-      req.assert('career', 'Career must be either student, teacher, or professor').isIn(['student','teacher','professor']);
+      req.assert('career', 'Career must be either student, professional, or business').isIn(['student','professional','business']);
       var errors = req.validationErrors();
       if (errors)
       {
@@ -186,14 +222,18 @@ module.exports = function(server)
     });
 
     // PUT http://localhost:8888/users/5983848f5e5b290fc49fa5fd
+    //http://localhost:8888/users/59811995001b3d31b43d8da2
     server.put("/users/:id", function(req, res, next)
     {
-      req.assert('id', 'Id is required and must be numeric').notEmpty();
-  		var errors = req.validationErrors();
-  		if (errors) {
-  			helper.failure(res, next, errors[0], 400);
-  			return next();
-  		}
+      //logger.log('info','');
+      logger.log('info', '-------------- inside Put ---------');
+      req.assert('id', 'Id is required and needs to be passed in urlQqueryParams').notEmpty();
+      logger.log('info', 'function req.assert() completed and req.params is -->'+ JSON.stringify(req.params.id));
+      var errors = req.validationErrors();
+      if (errors) {
+      	helper.failure(res, next, errors, 400);
+    		return next();
+    	}
       UserModel.findOne({ _id: req.params.id }, function (err, user)
       {
   			if (err)

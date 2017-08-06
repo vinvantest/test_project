@@ -27,22 +27,22 @@ module.exports = function(server)
     });
 
     // GET http://localhost:8888/users with pagenation example
+    // GET http://localhost:8888/users?page=1&limit=5&sortBy=updated_at - worked!
+    // GET http://localhost:8888/users?page=3&limit=3&sortBy=last_name - worked!
     server.get("/users", function(req, res, next)
     {
       //get url query params
-      // http://localhost:8888/users?first=Dumy&second=Tumy
-      var urlQqueryParams = req.getQuery();//getQuery converts to a string ... we don't need another variable just to get url params
-      logger.log('info', 'url queryParams passed is -> {' + JSON.stringify(urlQqueryParams) + '} '
-                  + 'where first param is: ' + JSON.stringify(req.query.first)
-                  + 'second param is: ' + JSON.stringify(req.query.second)
-                  + 'third param is: ' + JSON.stringify(req.query.third)
+      logger.log('info', 'url req.query.id passed is -> {' + JSON.stringify(req.getQuery()) + '} '
+                  + 'where first param is: ' + req.query.page
+                  + ' second param is: ' + req.query.limit
+                  + ' third param is: ' + req.query.sortBy
                 );
       //urlQqueryParams gets converted to a string due to req.getQuery() call
-      logger.log('info', 'var urlQqueryParams passed is -> {' + JSON.stringify(urlQqueryParams) + '} '
-                  + 'where first param is: ' + JSON.stringify(urlQqueryParams[0])
-                  + 'second param is: ' + JSON.stringify(urlQqueryParams[1])
-                  + 'third param is: ' + JSON.stringify(urlQqueryParams.third)
-                );
+      //logger.log('info', 'var urlQqueryParams passed is -> {' + JSON.stringify(urlQqueryParams) + '} '
+      //            + ' where first param is: ' + JSON.stringify(urlQqueryParams[0])
+      //            + ' second param is: ' + JSON.stringify(urlQqueryParams[1])
+      //            + ' third param is: ' + JSON.stringify(urlQqueryParams.third)
+      //          );
 
         //logger.log('debug', 'reached Get / ');
         //logger.log('debug', 'Invoking UserModel.find...');
@@ -82,6 +82,7 @@ module.exports = function(server)
 
         */
 
+        //SET default values for PAGINATION
         var query_criteria = {};
         var options = {
           page: 1, // pass 0 or 1 for the first page
@@ -92,6 +93,16 @@ module.exports = function(server)
           //populate: 'first_name' //throwing castbyId error
         };
 
+        //SET urlquery parameters to paginate
+        if(req.query.page)
+          options.page = parseInt(req.query.page);
+        if(req.query.limit)
+          options.limit = parseInt(req.query.limit);
+        if(req.query.sortBy) {
+          var sortByColumName = req.query.sortBy;
+          options.sortyBy = {  sortByColumName: -1};
+        }
+
         //logger.log('info', 'calling UserModel.paginate() -->');
         UserModel.paginate(query_criteria, options, function(error, results, total, pages){
         //logger.log('info', 'Inside callback UserModel.paginate() -->');
@@ -99,44 +110,51 @@ module.exports = function(server)
             logger.log('error', 'Error: in else UserModel.paginate() --> ' + error);
             helper.failure(res,next,error,500);
             return next();
-          } else{
-                //logger.log('info', '****** result.docs: are');
-                logger.log('info', 'Total Result count is = ' + parseInt(results.length));
+          }
+          else
+          {
+                var next_page_number = parseInt(options.page);
 
-                var query_result_count = 0;
-                for(var field in results){
+                logger.log('info', 'Total Result count is = ' + parseInt(results.length));
+                //for(var field in results){
                   //console.log('result[' + field + '] -->' + JSON.stringify(results[field]));
-                  logger.log('info', 'result['+field+'] -->' + JSON.stringify(results[field]));
-                }
+                  //logger.log('info', 'result['+field+'] -->' + JSON.stringify(results[field]));
+                //}
+
                 //Page requested is larger than total pages with the limit set then end message or error
                 if(pages > 0 && parseInt(options.page) > pages) {
                   logger.log('info', 'Page=' + options.page + ' called beyond Pages='+ pages);
                   helper.failure(res,next,
-                    'No records found for the page requested: '
+                    'No records found for the Page requested: '
                     + 'Page = '
                     + options.page
-                    + ' called beyond Pages = '
+                    + ' called beyond total number of Pages with respect to limit = '
                     + pages,404);
                   return next();
                 }
-                else {
+                else
+                {
                   logger.log('info', 'query_collection_total: ' + total);
                   logger.log('info', 'number_of_pages_based_on_limit ' + pages);
+                  next_page_number = parseInt(options.page) + 1;
+                  if(next_page_number > pages){
+                    next_page_number = -1;//reached limit. no more pages left for the next call
+                  }
 
-                    var next_page_number = parseInt(options.page) + 1;
-
-                    if(next_page_number > pages){
-                      next_page_number = -1;//reached limit. no more pages left for the next call
-                    }
-                    var returnObj = {
+                  var newUrl = req.route.path
+                                + '?page=' + next_page_number
+                                + '&limit=' + req.query.limit
+                                + '&sortBy=' + req.query.sortBy;
+                  //logger.info('info', 'new URL is ->'+newUrl);
+                  var returnObj = {
                     query_collection_result: results,
                     query_collection_total: total,
                     query_page_number_passed: options.page,
                     query_limit_passed: options.limit,
                     number_of_pages_based_on_limit: pages,
-                    next_page_number_to_pass: next_page_number
+                    next_page_number_to_pass: next_page_number,
+                    next_params_url_heotos: newUrl
                   };
-
                   //helper.success(res,next,results);
                   helper.success(res,next,returnObj);
                   return next();

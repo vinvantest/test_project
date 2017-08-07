@@ -12,6 +12,7 @@
     "mongoose": "^4.11.5",
     "mongoose-paginate": "^5.0.3",
     "mongoose-paginate-pages": "^1.0.0",
+    "mongoose-unique-validator": "^1.0.5",
     "morgan": "^1.8.2",
     "restify": "^5.0.1",
     "restify-plugins": "^1.6.0",

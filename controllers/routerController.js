@@ -12,7 +12,7 @@ var max_user_id = 0;
 module.exports = function(server)
 {
 
-    // Get http://localhost:8888/ - do not return all values
+    // Get http://localhost:8888/ - do not return all values. Client has to send pagination parameters
     server.get("/", function(req, res, next)
     {
         //logger.log('debug', 'reached Get / ');
@@ -163,7 +163,7 @@ module.exports = function(server)
         });
     });
 
-    // GET http://localhost:8888/users/5983848f5e5b290fc49fa5fd
+    // GET http://localhost:8888/users/5983848f5e5b290fc49fa5fd   or
     // GET http://localhost:8888/users/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
     server.get("/users/:id", function(req, res, next)
     {
@@ -215,7 +215,8 @@ module.exports = function(server)
       req.assert('first_name', 'First name is required').notEmpty();
       req.assert('last_name', 'Last name is required').notEmpty();
       req.assert('email_address', 'Email address is required and must be a valid email').notEmpty().isEmail();
-      req.assert('career', 'Career must be either student, professional, or business').isIn(['student','professional','business']);
+      //req.assert('career', 'Career must be either student, professional, or business').isIn(['student','professional','business']);
+      req.assert('career', 'Career must be either student, professional, or business and not empty').notEmpty();
       var errors = req.validationErrors();
       if (errors)
       {

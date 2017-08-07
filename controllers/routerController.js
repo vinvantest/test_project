@@ -128,7 +128,7 @@ module.exports = function(server)
                     'No records found for the Page requested: '
                     + 'Page = '
                     + options.page
-                    + ' called beyond total number of Pages with respect to limit = '
+                    + '. Called beyond total number of Pages with respect to limit = '
                     + pages,404);
                   return next();
                 }
@@ -244,10 +244,8 @@ module.exports = function(server)
     //http://localhost:8888/users/59811995001b3d31b43d8da2
     server.put("/users/:id", function(req, res, next)
     {
-      //logger.log('info','');
       logger.log('info', '-------------- inside Put ---------');
       req.assert('id', 'Id is required and needs to be passed in urlQqueryParams').notEmpty();
-      logger.log('info', 'function req.assert() completed and req.params is -->'+ JSON.stringify(req.params.id));
       var errors = req.validationErrors();
       if (errors) {
       	helper.failure(res, next, errors, 400);
@@ -262,9 +260,10 @@ module.exports = function(server)
   			}
   			if (user === null)
   			{
-  				helper.failure(res, next, 'The specified user could not be found', 404);
+  				helper.failure(res, next, 'The specified user '+ JSON.stringify(req.params.id) + 'could not be found', 404);
   				return next();
   			}
+        //update same record code below
   			var updates = req.params;
   			delete updates.id;
   			for (var field in updates)
@@ -281,6 +280,8 @@ module.exports = function(server)
               helper.success(res,next,user);
               return next();
   			});
+        //Update same record code ends
+
 		  });
     });
 

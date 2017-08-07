@@ -1,3 +1,5 @@
+'use strict';
+
 var helper = require('../config/helperFunctions.js');
 var logger = require('../config/logger.js');
 var UserModel = require('../model/UserModel.js');

@@ -384,8 +384,93 @@ module.exports = function(server) {
 
     });//End POST /comments/:userId
 
+    /*
+        app.get('/user/:id', function (req, res, next)
+        {
+          userSchema.findOne({'_id': userId}, function(err, user)
+           {
+            if(user){
+              next()
+            }else{
+                res.json("user id is not valid");
+              }
+            });
+        }, function (req, res, next) {
+          // code to add your product in product schema
+        });*/
+
+    // GET http://localhost:8888/users/5983848f5e5b290fc49fa5fd   or
+    // GET http://localhost:8888/users/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
+    // Get all comments
+    server.get("/comments/:userId", function(req, res, next)
+    {
+      req.assert('userId', 'Id is required and must be numeric').notEmpty();
+      var errors = req.validationErrors();
+      if(errors)
+      {
+        helper.failure(res,next,errors[0],400);
+        return next();
+      }
+      logger.log('info', 'req.params.userId = ' + JSON.stringify(req.params.userId));
+      //get Query params
+      var queryParams = req.getQuery();//getQuery() returns string
+      logger.log('info', 'queryParams passed is -> {' + JSON.stringify(queryParams) + '} '
+                  + 'where first param is: ' + JSON.stringify(req.query.first)
+                  + 'second param is: ' + JSON.stringify(req.query.second)
+                  + 'third param is: ' + JSON.stringify(req.query.third)
+                );
+
+      //you can loop in the query object
+      for(var field in req.query){
+        logger.log('info', 'Field['+field+'] = '+req.query[field]);
+      }//for loop end
+
+
+      UserModel.findById(req.params.userId, function (err, user)
+         {
+           if (err){
+             //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+             helper.failure(res, next, 'Something went wrong while fetching the user from the database for the comment to be inserted in DB - ' + JSON.stringify(err), 500);
+             return next();
+           }
+           if (user === null){
+             //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+             helper.failure(res, next, 'The specified user ' + req.params.userId +' could not be found to create comment', 404);
+             return next();
+           }
+           else {
+             logger.log('info', 'Exiting UserModel.find() as user is found = ' + JSON.stringify(req.params.userId));
+             return next();
+           }
+
+        });//end else of UserModel.findById()
+
+  }, //userModel find function of get ends
+  function(req, res, next) //next function to call once user is found i.e. find comments for the user
+  {
+    logger.log('info', 'Inside Comment function for the user id = ' + JSON.stringify(req.params.userId));
+    // Below is not working .. throwing compiletime error
+    //CommentModel.findOne({commentProfile: ''}).populate('commentedBy').exec( function(err, comments)
+    CommentModel.find({})
+                .populate({ path: 'commentedBy', select: 'first_name last_name', match: { _id : req.params.userId } })
+                .exec(function(err, comments)
+                  {
+                    if(err) {
+                        helper.failure(res, next, 'Something went wrong while fetching the comments from the database for the user  - ' + JSON.stringify(err), 500);
+                        return next();
+                    }
+                    else {
+                      logger.log('info', 'success in retrieveing all the comments for the userId '+ req.params.userId);
+                      helper.success(res, next, comments);
+                      return next();
+                    }
+                });//end exec() of comments.find().populate
+  });// GET comments ends
 
 
 
+
+
+//----------- No function Codeing below this line ----------------
 
 }//router.js module.exports end

@@ -384,21 +384,6 @@ module.exports = function(server) {
 
     });//End POST /comments/:userId
 
-    /*
-        app.get('/user/:id', function (req, res, next)
-        {
-          userSchema.findOne({'_id': userId}, function(err, user)
-           {
-            if(user){
-              next()
-            }else{
-                res.json("user id is not valid");
-              }
-            });
-        }, function (req, res, next) {
-          // code to add your product in product schema
-        });*/
-
     // GET http://localhost:8888/users/5983848f5e5b290fc49fa5fd   or
     // GET http://localhost:8888/users/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
     // Get all comments
@@ -430,7 +415,10 @@ module.exports = function(server) {
          {
            if (err){
              //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
-             helper.failure(res, next, 'Something went wrong while fetching the user from the database for the comment to be inserted in DB - ' + JSON.stringify(err), 500);
+             helper.failure(res, next, 'Something went wrong while fetching the user '
+                                        + req.params.userId
+                                        + ' from the database for the comment to be inserted in DB - '
+                                        + JSON.stringify(err), 500);
              return next();
            }
            if (user === null){
@@ -442,9 +430,7 @@ module.exports = function(server) {
              logger.log('info', 'Exiting UserModel.find() as user is found = ' + JSON.stringify(req.params.userId));
              return next();
            }
-
         });//end else of UserModel.findById()
-
   }, //userModel find function of get ends
   function(req, res, next) //next function to call once user is found i.e. find comments for the user
   {
@@ -466,9 +452,6 @@ module.exports = function(server) {
                     }
                 });//end exec() of comments.find().populate
   });// GET comments ends
-
-
-
 
 
 //----------- No function Codeing below this line ----------------

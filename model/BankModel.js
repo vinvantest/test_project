@@ -24,7 +24,7 @@ var BankModel = new Schema
 );
 
 BankModel.plugin(mongoosePaginate);
-BankModel.plugin(uniqueValidator,{ message: 'Error, api expects {PATH} to be unique.'});
+BankModel.plugin(uniqueValidator,{ message: 'Error - BankModel, api expects {PATH} to be unique.'});
 BankModel.plugin(mongooseHistory);
 
 var BankModel = mongoose.model('transactions', BankModel);

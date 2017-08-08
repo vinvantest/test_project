@@ -22,7 +22,7 @@ var UserSchema = new Schema
 );
 
 UserSchema.plugin(mongoosePaginate);
-UserSchema.plugin(uniqueValidator,{ message: 'Error, api expects {PATH} to be unique.'});
+UserSchema.plugin(uniqueValidator,{ message: 'Error - UserModel, api expects {PATH} to be unique.'});
 UserSchema.plugin(mongooseHistory);
 
 var UserModel = mongoose.model('users', UserSchema);

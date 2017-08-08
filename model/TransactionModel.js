@@ -28,7 +28,7 @@ var TransactionModel = new Schema
 );
 
 TransactionModel.plugin(mongoosePaginate);
-TransactionModel.plugin(uniqueValidator,{ message: 'Error, api expects {PATH} to be unique.'});
+TransactionModel.plugin(uniqueValidator,{ message: 'Error - TransactionModel, api expects {PATH} to be unique.'});
 TransactionModel.plugin(mongooseHistory);
 
 var TransactionModel = mongoose.model('transactions', TransactionModel);

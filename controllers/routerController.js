@@ -3,16 +3,16 @@
 var helper = require('../config/helperFunctions.js');
 var logger = require('../config/logger.js');
 var UserModel = require('../model/UserModel.js');
+var CommentModel = require('../model/CommentModel.js');
 
-//console.log('Router Module - helper and logger require complete');
+//console.log('Router Module - helper, Models and logger require complete');
 //logger.log('info', 'Inside Router Module - helper, logger & UserModel require statement completed');
 
 //fake database
-var users = {};
-var max_user_id = 0;
+//var users = {};
+//var max_user_id = 0;
 
-module.exports = function(server)
-{
+module.exports = function(server) {
 
     // Get http://localhost:8888/ - do not return all values. Client has to send pagination parameters
     server.get("/", function(req, res, next)
@@ -276,9 +276,9 @@ module.exports = function(server)
   			{
   				if (err)
   				 {
-  					helper.failure(res, next, errors, 500);
+  					helper.failure(res, next, err, 500);
   					return next();
-                 }
+            }
               helper.success(res,next,user);
               return next();
   			});
@@ -321,5 +321,71 @@ module.exports = function(server)
   			});
   		});
     });
+
+
+    /*******************************************************
+    *     Comments Model API Gateway
+    *
+    ********************************************************/
+
+    // POST http://localhost:8888/comments/:userId
+    server.post("/comments/:userId", function(req, res, next)
+    {
+      req.assert('commentDate', 'Commented Date is required').notEmpty();
+      req.assert('commentString', 'Comments are required and cannot be empty').notEmpty();
+      req.assert('commentProfile', 'Comment Profile address is required and must unique').notEmpty();
+      req.assert('userId', 'User Name of the Commentor is required and must not be empty').notEmpty();
+      var errors = req.validationErrors();
+      if (errors)
+      {
+        helper.failure(res, next, errors, 400);
+        return next();
+      }
+      //logger.log('info', 'Inside Post Comments - finding user with userid -> ' + req.params.userId);
+
+      //UserModel.findOne({ _id: req.params.userId }, function (err, user) //even findOne works
+      UserModel.findById(req.params.userId, function (err, user)
+         {
+           //logger.log('info', 'Inside User model.findOne() for userid -> ' + req.params.userId);
+    			if (err)
+    			{
+            //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+    				helper.failure(res, next, 'Something went wrong while fetching the user from the database for the comment to be inserted in DB - ' + JSON.stringify(err), 500);
+    				return next();
+    			}
+    			if (user === null)
+    			{
+            //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+    				helper.failure(res, next, 'The specified user' + req.params.userId +' could not be found to create comment', 404);
+    				return next();
+    			}
+          else {
+            // user found now save Comment
+            var comment = new CommentModel();
+            comment.commentDate = req.params.commentDate;
+            comment.commentString = req.params.commentString;
+            comment.commentProfile = req.params.commentProfile;
+            comment.commentedBy = user._id;
+            comment.save(function (err)
+            {
+              //logger.log('info', 'Inside comment.save() with the userId ->' + JSON.stringify(user._id));
+              if(err){
+                helper.failure(res, next, 'Error saving comment to DB for specific user ' + JSON.stringify(user._id) + ' - ' + err, 500);
+                return next();
+              }
+              else {
+                //logger.log('info', 'Success... now sending success to router ->' + JSON.stringify(user._id));
+                helper.success(res,next,comment);
+                return next();
+              }
+            }); //end inserting comment for the specific user
+          }
+		   });//end find specific user
+
+    });//End POST /comments/:userId
+
+
+
+
 
 }//router.js module.exports end

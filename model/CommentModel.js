@@ -16,7 +16,8 @@ var CommentModel = new Schema
         commentDate     : { type: Date, required: true, default: Date.now},
         commentString   : { type: String, required: true},
         commentProfile  : { type: String, index: true, required: true, unique: true, uniqueCaseInsensitive: true, lowercase: true},
-        commentedBy     : { type: ObjectId, ref: 'users'}
+        commentedBy     : { type: ObjectId, ref: 'users'},
+        postTitleRef    : {type: ObjectId, ref: 'posts'}
     },
     {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
 );

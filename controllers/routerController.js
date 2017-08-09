@@ -337,6 +337,7 @@ module.exports = function(server) {
       req.assert('commentString', 'Comments are required and cannot be empty').notEmpty();
       req.assert('commentProfile', 'Comment Profile address is required and must unique').notEmpty();
       req.assert('userId', 'User Name of the Commentor is required and must not be empty').notEmpty();
+      req.assert('postTitleRef', 'postTitleRef of the Post is required and must not be empty').notEmpty();
       var errors = req.validationErrors();
       if (errors)
       {
@@ -367,6 +368,7 @@ module.exports = function(server) {
             comment.commentDate = req.params.commentDate;
             comment.commentString = req.params.commentString;
             comment.commentProfile = req.params.commentProfile;
+            comment.postTitleRef = req.params.postTitleRef;
             comment.commentedBy = user._id;
             comment.save(function (err)
             {
@@ -693,7 +695,7 @@ module.exports = function(server) {
       // Below is not working .. throwing compiletime error
       //CommentModel.findOne({commentProfile: ''}).populate('commentedBy').exec( function(err, comments)
       var populateQuery = [{ path: 'commentsDataId',
-                              select: 'commentString commentProfile',
+                              select: 'commentString commentProfile postTitleRef',
                               match: { _id : req.params.commentsDataId }
                             },
                             { path: 'postsDataId',

@@ -5,6 +5,7 @@ var logger = require('../config/logger.js');
 var UserModel = require('../model/UserModel.js');
 var CommentModel = require('../model/CommentModel.js');
 var PostModel = require('../model/PostModel.js');
+var MixRefModel = require('../model/MixRefModel.js');
 
 //console.log('Router Module - helper, Models and logger require complete');
 //logger.log('info', 'Inside Router Module - helper, logger & UserModel require statement completed');
@@ -510,6 +511,223 @@ module.exports = function(server) {
 
       });//End POST /posts/:userId
 
+      // GET http://localhost:8888/users/5983848f5e5b290fc49fa5fd   or
+      // GET http://localhost:8888/users/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
+      // Get all posts for userId
+      server.get("/posts/:userId", function(req, res, next)
+      {
+        req.assert('userId', 'Id is required and must be numeric').notEmpty();
+        var errors = req.validationErrors();
+        if(errors)
+        {
+          helper.failure(res,next,errors[0],400);
+          return next();
+        }
+        logger.log('info', 'req.params.userId = ' + JSON.stringify(req.params.userId));
+        //get Query params
+        var queryParams = req.getQuery();//getQuery() returns string
+        logger.log('info', 'queryParams passed is -> {' + JSON.stringify(queryParams) + '} '
+                    + 'where first param is: ' + JSON.stringify(req.query.first)
+                    + 'second param is: ' + JSON.stringify(req.query.second)
+                    + 'third param is: ' + JSON.stringify(req.query.third)
+                  );
+
+        //you can loop in the query object
+        for(var field in req.query){
+          logger.log('info', 'Field['+field+'] = '+req.query[field]);
+        }//for loop end
+
+        UserModel.findById(req.params.userId, function (err, user)
+           {
+             if (err){
+               //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+               helper.failure(res, next, 'Something went wrong while fetching the user '
+                                          + req.params.userId
+                                          + ' from the database for the comment to be inserted in DB - '
+                                          + JSON.stringify(err), 500);
+               return next();
+             }
+             if (user === null){
+               //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+               helper.failure(res, next, 'The specified user ' + req.params.userId +' could not be found to create comment', 404);
+               return next();
+             }
+             else {
+               logger.log('info', 'Exiting UserModel.find() as user is found = ' + JSON.stringify(req.params.userId));
+               return next();
+             }
+          });//end else of UserModel.findById()
+      }, //userModel find function of get ends
+      function(req, res, next) //next function to call once user is found i.e. find comments for the user
+      {
+      logger.log('info', 'Inside Comment function for the user id = ' + JSON.stringify(req.params.userId));
+      // Below is not working .. throwing compiletime error
+      //CommentModel.findOne({commentProfile: ''}).populate('commentedBy').exec( function(err, comments)
+      PostModel.find({})
+                  .populate({ path: 'postedBy', select: 'first_name last_name', match: { _id : req.params.userId } })
+                  .exec(function(err, posts)
+                    {
+                      if(err) {
+                          helper.failure(res, next, 'Something went wrong while fetching the comments from the database for the user  - ' + JSON.stringify(err), 500);
+                          return next();
+                      }
+                      else {
+                        logger.log('info', 'success in retrieveing all the comments for the userId '+ req.params.userId);
+                        helper.success(res, next, posts);
+                        return next();
+                      }
+                  });//end exec() of comments.find().populate
+      });// GET comments ends
+
+
+      /*******************************************************
+      *     MixRefModel  API Gateway
+      *
+      ********************************************************/
+
+      // POST http://localhost:8888/mixrefs/5987e4e959e37c1f340739e6
+      server.post("/mixrefs/:userId", function(req, res, next)
+      {
+        req.assert('anyString', 'anyString is required').notEmpty();
+        req.assert('anyUniqueString', 'anyUniqueString is required and must be unique').notEmpty();
+        req.assert('userId', 'User Name of the Post is required and must not be empty').notEmpty();
+        req.assert('commentsDataId', 'commentsDataId is required and must not be empty').notEmpty();
+        req.assert('postsDataId', 'postsDataId is required and must not be empty').notEmpty();
+        var errors = req.validationErrors();
+        if (errors)
+        {
+          helper.failure(res, next, errors, 400);
+          return next();
+        }
+        UserModel.findById(req.params.userId, function (err, user)
+           {
+             //logger.log('info', 'Inside User model.findOne() for userid -> ' + req.params.userId);
+            if (err)
+            {
+              //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+              helper.failure(res, next, 'Something went wrong while fetching the user from the database for the comment to be inserted in DB - ' + JSON.stringify(err), 500);
+              return next();
+            }
+            if (user === null)
+            {
+              //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+              helper.failure(res, next, 'The specified user' + req.params.userId +' could not be found to create comment', 404);
+              return next();
+            }
+            else {
+              // user found now save Comment
+              var mixRefOne = new MixRefModel();
+              mixRefOne.anyString = req.params.anyString;
+              mixRefOne.anyUniqueString = req.params.anyUniqueString;
+              mixRefOne.commentsDataId = req.params.commentsDataId;
+              mixRefOne.postsDataId = req.params.postsDataId;
+              mixRefOne.save(function (err)
+              {
+                //logger.log('info', 'Inside comment.save() with the userId ->' + JSON.stringify(user._id));
+                if(err){
+                  helper.failure(res, next, 'Error saving MixedRef to DB for specific user ' + JSON.stringify(user._id) + ' - ' + err, 500);
+                  return next();
+                }
+                else {
+                  //logger.log('info', 'Success... now sending success to router ->' + JSON.stringify(user._id));
+                  helper.success(res,next,mixRefOne);
+                  return next();
+                }
+              }); //end inserting comment for the specific user
+            }
+         });//end find specific user
+
+      });//End POST /posts/:userId
+
+
+      // GET http://localhost:8888/mixrefs/5987e4e959e37c1f340739e6 or
+      // GET http://localhost:8888/mixrefs/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
+      // Get all mixrefs for userId
+      server.get("/mixrefs/:userId", function(req, res, next)
+      {
+        req.assert('userId', 'Id is required and must be numeric').notEmpty();
+        var errors = req.validationErrors();
+        if(errors)
+        {
+          helper.failure(res,next,errors[0],400);
+          return next();
+        }
+        logger.log('info', 'req.params.userId = ' + JSON.stringify(req.params.userId));
+        //get Query params
+        var queryParams = req.getQuery();//getQuery() returns string
+        logger.log('info', 'queryParams passed is -> {' + JSON.stringify(queryParams) + '} '
+                    + 'where first param is: ' + JSON.stringify(req.query.first)
+                    + 'second param is: ' + JSON.stringify(req.query.second)
+                    + 'third param is: ' + JSON.stringify(req.query.third)
+                  );
+
+        //you can loop in the query object
+        for(var field in req.query){
+          logger.log('info', 'Field['+field+'] = '+req.query[field]);
+        }//for loop end
+
+        UserModel.findById(req.params.userId, function (err, user)
+           {
+             if (err){
+               //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+               helper.failure(res, next, 'Something went wrong while fetching the user '
+                                          + req.params.userId
+                                          + ' from the database for the comment to be inserted in DB - '
+                                          + JSON.stringify(err), 500);
+               return next();
+             }
+             if (user === null){
+               //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+               helper.failure(res, next, 'The specified user ' + req.params.userId +' could not be found to create comment', 404);
+               return next();
+             }
+             else {
+               logger.log('info', 'Exiting UserModel.find() as user is found = ' + JSON.stringify(req.params.userId));
+               return next();
+             }
+          });//end else of UserModel.findById()
+      }, //userModel find function of get ends
+      function(req, res, next) //next function to call once user is found i.e. find comments for the user
+      {
+      logger.log('info', 'Inside MixRefModel.Populate function for the user id = ' + JSON.stringify(req.params.userId));
+      // Below is not working .. throwing compiletime error
+      //CommentModel.findOne({commentProfile: ''}).populate('commentedBy').exec( function(err, comments)
+      var populateQuery = [{ path: 'commentsDataId',
+                              select: 'commentString commentProfile',
+                              match: { _id : req.params.commentsDataId }
+                            },
+                            { path: 'postsDataId',
+                              select: 'postTitle postCatNumber',
+                              match: { _id : req.params.postsDataId }
+                            }];
+      /*
+      even this works ... if you don't want to declare a var for populateQuery
+      MixRefModel.find({})
+                  .populate([{ path: 'commentsDataId',
+                                          select: 'commentString commentProfile',
+                                          match: { _id : req.params.commentsDataId }
+                                        },
+                                        { path: 'postsDataId',
+                                          select: 'postTitle postCatNumber',
+                                          match: { _id : req.params.postsDataId }
+                                        }])
+                  .exec(function(err, mixRef){}
+      */
+      MixRefModel.find({})
+                  .populate(populateQuery)
+                  .exec(function(err, mixRef)
+                    {
+                      if(err) {
+                          helper.failure(res, next, 'Something went wrong while fetching the comments from the database for the user  - ' + JSON.stringify(err), 500);
+                          return next();
+                      }
+                      else {
+                        logger.log('info', 'success in retrieveing all the comments for the userId '+ req.params.userId);
+                        helper.success(res, next, mixRef);
+                        return next();
+                      }
+                  });//end exec() of comments.find().populate
+      });// GET comments ends
 
 
 //----------- No function Codeing below this line ----------------

@@ -21,8 +21,8 @@ var TransactionModel = new Schema
         accountType     : { type: String, required: true, enum: ['cheque', 'savings', 'credit'], default: 'savings'},
         isDebit         : { type: Boolean, required: true, default: false},
         paidToCompany   : { type: String, required: true, default: ''},
-        transactionByUserId          : { type: Schema.types.ObjectId, ref: 'UserModel'},
-        bankAccountsOfUserId         : [{ type: Schema.types.ObjectId, ref: 'BankModel'}]
+        transactionByUserId          : { type: Schema.types.ObjectId, ref: 'users'},
+        bankAccountsOfUserId         : [{ type: Schema.types.ObjectId, ref: 'banks'}]
     },
     {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
 );

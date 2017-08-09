@@ -4,6 +4,7 @@ var helper = require('../config/helperFunctions.js');
 var logger = require('../config/logger.js');
 var UserModel = require('../model/UserModel.js');
 var CommentModel = require('../model/CommentModel.js');
+var PostModel = require('../model/PostModel.js');
 
 //console.log('Router Module - helper, Models and logger require complete');
 //logger.log('info', 'Inside Router Module - helper, logger & UserModel require statement completed');
@@ -452,6 +453,63 @@ module.exports = function(server) {
                     }
                 });//end exec() of comments.find().populate
   });// GET comments ends
+
+      /*******************************************************
+      *     Posts Model API Gateway
+      *
+      ********************************************************/
+
+      // POST http://localhost:8888/posts/:userId
+      server.post("/posts/:userId", function(req, res, next)
+      {
+        req.assert('postTitle', 'postTitle is required').notEmpty();
+        req.assert('postCatNumber', 'postCatNumber is required and must be unique').notEmpty();
+        req.assert('userId', 'User Name of the Post is required and must not be empty').notEmpty();
+        var errors = req.validationErrors();
+        if (errors)
+        {
+          helper.failure(res, next, errors, 400);
+          return next();
+        }
+        UserModel.findById(req.params.userId, function (err, user)
+           {
+             //logger.log('info', 'Inside User model.findOne() for userid -> ' + req.params.userId);
+      			if (err)
+      			{
+              //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+      				helper.failure(res, next, 'Something went wrong while fetching the user from the database for the comment to be inserted in DB - ' + JSON.stringify(err), 500);
+      				return next();
+      			}
+      			if (user === null)
+      			{
+              //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+      				helper.failure(res, next, 'The specified user' + req.params.userId +' could not be found to create comment', 404);
+      				return next();
+      			}
+            else {
+              // user found now save Comment
+              var postOne = new PostModel();
+              postOne.postTitle = req.params.postTitle;
+              postOne.postCatNumber = req.params.postCatNumber;
+              postOne.postedBy = user._id;
+              postOne.save(function (err)
+              {
+                //logger.log('info', 'Inside comment.save() with the userId ->' + JSON.stringify(user._id));
+                if(err){
+                  helper.failure(res, next, 'Error saving Post to DB for specific user ' + JSON.stringify(user._id) + ' - ' + err, 500);
+                  return next();
+                }
+                else {
+                  //logger.log('info', 'Success... now sending success to router ->' + JSON.stringify(user._id));
+                  helper.success(res,next,postOne);
+                  return next();
+                }
+              }); //end inserting comment for the specific user
+            }
+  		   });//end find specific user
+
+      });//End POST /posts/:userId
+
 
 
 //----------- No function Codeing below this line ----------------

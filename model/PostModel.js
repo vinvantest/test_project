@@ -12,12 +12,9 @@ var PostModel = new Schema
 (
     {
         id              : ObjectId,
-        postDate        : { type: Date, required: true, default: Date.now},
-        title           : { type: String, required: true},
+        postTitle       : { type: String, required: true},
         postCatNumber   : { type: String, index: true, required: true, unique: true, uniqueCaseInsensitive: true, lowercase: true},
-        postType        : { type: String, required: true, enum: ['general', 'public', 'private'], default: 'public'},
-        comments        : [{ type: mongoose.Schema.types.ObjectId, ref: 'CommentModel'}],
-        postedBy        : { type: mongoose.Schema.types.ObjectId, ref: 'UserModel'}
+        postedBy        : { type: ObjectId, ref: 'users'}
     },
     {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
 );

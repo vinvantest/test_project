@@ -18,7 +18,7 @@ var BankModel = new Schema
         bankName        : { type: String, required: true},
         accountName     : { type: String, required: true, default: ''},
         accountType     : { type: String, required: true, enum: ['cheque', 'savings', 'credit'], default: 'savings'},
-        bankUserId      : { type: Schema.types.ObjectId, ref: 'UserModel'}
+        bankUserId      : { type: Schema.types.ObjectId, ref: 'users'}
     },
     {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
 );
@@ -27,6 +27,6 @@ BankModel.plugin(mongoosePaginate);
 BankModel.plugin(uniqueValidator,{ message: 'Error - BankModel, api expects {PATH} to be unique.'});
 BankModel.plugin(mongooseHistory);
 
-var BankModel = mongoose.model('transactions', BankModel);
+var BankModel = mongoose.model('banks', BankModel);
 
 module.exports = BankModel;

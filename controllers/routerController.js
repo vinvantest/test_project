@@ -726,8 +726,8 @@ module.exports = function(server) {
                         helper.success(res, next, mixRef);
                         return next();
                       }
-                  });//end exec() of comments.find().populate
-      });// GET comments ends
+                  });//end exec() of mixRef.find().populate
+      });// GET mixRef ends
 
 
 //----------- No function Codeing below this line ----------------

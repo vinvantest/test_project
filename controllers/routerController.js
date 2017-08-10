@@ -126,7 +126,8 @@ module.exports = function(server) {
                 //}
 
                 //Page requested is larger than total pages with the limit set then end message or error
-                if(pages > 0 && parseInt(options.page) > pages) {
+                if(pages > 0 && parseInt(options.page) > pages)
+                {
                   logger.log('info', 'Page=' + options.page + ' called beyond Pages='+ pages);
                   helper.failure(res,next,
                     'No records found for the Page requested: '
@@ -141,7 +142,8 @@ module.exports = function(server) {
                   logger.log('info', 'query_collection_total: ' + total);
                   logger.log('info', 'number_of_pages_based_on_limit ' + pages);
                   next_page_number = parseInt(options.page) + 1;
-                  if(next_page_number > pages){
+                  if(next_page_number > pages)
+                  {
                     next_page_number = -1;//reached limit. no more pages left for the next call
                   }
 
@@ -150,7 +152,8 @@ module.exports = function(server) {
                                 + '&limit=' + req.query.limit
                                 + '&sortBy=' + req.query.sortBy;
                   //logger.info('info', 'new URL is ->'+newUrl);
-                  var returnObj = {
+                  var returnObj =
+                  {
                     query_collection_result: results,
                     query_collection_total: total,
                     query_page_number_passed: options.page,

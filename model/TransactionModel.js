@@ -24,7 +24,8 @@ var TransactionModel = new Schema
         transactionByUserId          : { type: Schema.types.ObjectId, ref: 'users'},
         bankAccountsOfUserId         : [{ type: Schema.types.ObjectId, ref: 'banks'}]
     },
-    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
+    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }},
+    { runSettersOnQuery: true }
 );
 
 TransactionModel.plugin(mongoosePaginate);

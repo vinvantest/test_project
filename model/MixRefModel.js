@@ -17,7 +17,8 @@ var MixRefModel = new Schema
         commentsDataId     : { type: ObjectId, ref: 'comments'},
         postsDataId        : { type: ObjectId, ref: 'posts'}
     },
-    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
+    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }},
+    { runSettersOnQuery: true }
 );
 
 MixRefModel.plugin(mongoosePaginate);

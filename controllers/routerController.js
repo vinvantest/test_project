@@ -213,7 +213,109 @@ module.exports = function(server) {
 
   });// GET ends
 
+/* ***************************************************
+*       Below GET method Select * from * where *
+*       Using Query rather than parameter in Find({})
+********************************************************
+// With a JSON doc
+Person.
+  find({
+    occupation: /host/,
+    'name.last': 'Ghost',
+    age: { $gt: 17, $lt: 66 },
+    likes: { $in: ['vaporizing', 'talking'] }
+  }).
+  limit(10).
+  sort({ occupation: -1 }).
+  select({ name: 1, occupation: 1 }).
+  exec(callback);
+
+// Using query builder
+Person.
+  find({ occupation: /host/ }).
+  where('name.last').equals('Ghost').
+  where('age').gt(17).lt(66).
+  where('likes').in(['vaporizing', 'talking']).
+  limit(10).
+  sort('-occupation').
+  select('name occupation').
+  exec(function (err, person) {
+                            if (err) return handleError(err);
+                            console.log('%s %s is a %s.',
+                                        person.name.first,
+                                        person.name.last,
+                                        person.occupation) // Space Ghost is a talk show host.
+                          });
+
+
+******************************************************/
+
+// GET http://localhost:8888/users_query?firstName=Debbie&ageGt=25&ageLt=40&career=student
+server.get("/users_query", function(req, res, next)
+{
+  logger.log('info', 'req.query.firstName = ' + JSON.stringify(req.query.firstName));
+  logger.log('info', 'req.query.ageGt = ' + JSON.stringify(req.query.ageGt));
+
+  //req.assert() only works on params object in request i.e. before ?
+  /*
+  req.assert('firstName', 'firstName is required').notEmpty();
+  req.assert('ageGt', 'ageGt is required and must be numeric').notEmpty().isInt();
+  req.assert('ageLt', 'ageLt is required and must be numeric').notEmpty().isInt();
+  req.assert('career', 'career is required').notEmpty();
+
+  var errors = req.validationErrors();
+  if(errors)
+  {
+    helper.failure(res,next,errors[0],400);
+    return next();
+  }
+  */
+  //get Query params
+  var queryParams = req.getQuery();
+  logger.log('info', 'queryParams passed is -> {' + JSON.stringify(queryParams) + '} '
+              + 'where First Name is: ' + JSON.stringify(req.query.firstName)
+              + 'Age Greater than is: ' + JSON.stringify(req.query.ageGt)
+              + 'Age Lower than is: ' + JSON.stringify(req.query.ageLt)
+              + 'Career is: ' + JSON.stringify(req.query.career)
+            );
+
+  //you can loop in the query object
+  for(var field in req.query){
+    logger.log('info', 'Field['+field+'] = '+req.query[field]);
+  }//for loop end
+
+  UserModel.findOne()
+                    .where('first_name').equals(req.query.firstName)
+                    .where('age').gt(parseInt(req.query.ageGt)).lt(parseInt(req.query.ageLt))
+                    //.where('age').lt(parseInt(req.query.ageLt))
+                    .where('career').equals(req.query.career).in(['studuent', 'business'])
+                    //.where('career').in(['studuent', 'business'])
+                    .limit(5)
+                    .sort('-updated_at')
+                    .select('first_name last_name age career')
+                    .exec(function (err, user)
+                     {
+                          if (err)
+                          {
+                            helper.failure(res, next, 'Something went wrong while fetching the user from the database - '
+                                          + JSON.stringify(err), 500);
+                            return next();
+                          }
+                          if (user === null)
+                          {
+                            helper.failure(res, next, 'The specified user could not be found for ' + req.getQuery(), 404);
+                            return next();
+                          }
+                              helper.success(res, next, user);
+                              return next();
+                      });
+
+});// GET ends
+
+/*************************/
+
     // POST http://localhost:8888/users/
+    // body JSON - first_name: xxx, last_name: xxx, email_address: xxx@xx.com
     server.post("/user", function(req, res, next)
     {
       req.assert('first_name', 'First name is required').notEmpty();

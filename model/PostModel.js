@@ -16,7 +16,8 @@ var PostModel = new Schema
         postCatNumber   : { type: String, index: true, required: true, unique: true, uniqueCaseInsensitive: true, lowercase: true},
         postedBy        : { type: ObjectId, ref: 'users'}
     },
-    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
+    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }},
+    { runSettersOnQuery: true }
 );
 
 PostModel.plugin(mongoosePaginate);

@@ -20,7 +20,8 @@ var BankModel = new Schema
         accountType     : { type: String, required: true, enum: ['cheque', 'savings', 'credit'], default: 'savings'},
         bankUserId      : { type: Schema.types.ObjectId, ref: 'users'}
     },
-    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}
+    {timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }},
+    { runSettersOnQuery: true }
 );
 
 BankModel.plugin(mongoosePaginate);

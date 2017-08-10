@@ -694,14 +694,62 @@ module.exports = function(server) {
       logger.log('info', 'Inside MixRefModel.Populate function for the user id = ' + JSON.stringify(req.params.userId));
       // Below is not working .. throwing compiletime error
       //CommentModel.findOne({commentProfile: ''}).populate('commentedBy').exec( function(err, comments)
-      var populateQuery = [{ path: 'commentsDataId',
+      /*var populateQuery = [{ path: 'commentsDataId',
                               select: 'commentString commentProfile postTitleRef',
                               match: { _id : req.params.commentsDataId }
                             },
                             { path: 'postsDataId',
-                              select: 'postTitle postCatNumber',
+                              select: 'postTitle postCatNumber postedBy',
                               match: { _id : req.params.postsDataId }
-                            }];
+                            }];*/
+
+      // Blog.user.review
+      //mixRef.post.user
+
+      /*
+      Imp: The result of populateQuery is MixRef.
+                                                postsDataId.
+                                                          postedBy: userid.
+                                                                          first_name
+                                                                          career
+                                                commentsDataId
+                JSON Object Returned - http://localhost:8888/mixrefs/5987e4e959e37c1f340739e6
+                {
+                  "_id": "598a913022bffa0334b6cfed",
+                  "updated_at": "2017-08-09T04:36:00.327Z",
+                  "created_at": "2017-08-09T04:36:00.327Z",
+                  "postsDataId": {
+                      "_id": "598a89b3067a8f1608a664b6",
+                      "postedBy":
+                      {
+                          "_id": "5987e4e959e37c1f340739e6",
+                          "first_name": "Surya",
+                          "career": "business"
+                      },
+                      "postCatNumber": "jrsdrt463",
+                      "postTitle": "My Next Post Title"
+                  },
+                  "commentsDataId": {
+                      "_id": "598943bdaeccf20d908e81de",
+                      "commentProfile": "jslo98292",
+                      "commentString": "My THIRD comment"
+                  },
+                  "anyUniqueString": "uims24w22",
+                  "anyString": "Jabber Jabber",
+                  "__v": 0
+              }
+      */
+
+      var populateQuery = [{  path: 'commentsDataId',
+                              select: 'commentString commentProfile postTitleRef',
+                              match: { _id : req.params.commentsDataId }
+                              },
+                              { path: 'postsDataId',
+                                select: 'postTitle postCatNumber postedBy',
+                                populate: { path: 'postedBy', select: 'first_name career'},
+                                match: { _id : req.params.postsDataId }
+                              }];
+
       /*
       even this works ... if you don't want to declare a var for populateQuery
       MixRefModel.find({})
@@ -714,6 +762,40 @@ module.exports = function(server) {
                                           match: { _id : req.params.postsDataId }
                                         }])
                   .exec(function(err, mixRef){}
+      */
+
+/*
+      Populating across multiple levels
+      Firstly, update mongoose 3 to 4 & then use the simplest way for deep population in mongoose as below :
+      Suppose you have Blog schema having userId as ref Id & then in User you have some review as ref Id for schema Review. So Basically, you have three schema : 1. Blog 2. User 3. Review
+      And, you have to query from blog, which user owns this blog & the user review. So you can query your result as :
+
+      <BlogModel>.find({})
+                .populate(
+                          {
+                            path : 'userId',
+                            populate : {path : 'reviewId'}
+                          })
+                .exec(function (err, res)
+                {
+               });
+      //------------------------
+      Say you have a user schema which keeps track of the user's friends.
+        var userSchema = new Schema(
+        {
+          name: String,
+          friends: [{ type: ObjectId, ref: 'User' }]
+        });
+        Populate lets you get a list of a user's friends, but what if you also wanted a user's friends of friends? Specify the populate option to tell mongoose to populate the friends array of all the user's friends:
+
+        User.findOne({ name: 'Val' })
+        .populate(
+        {
+            path: 'friends',
+            // Get friends of friends - populate the 'friends' array for every friend
+            populate: { path: 'friends' }
+        });
+        Reference: http://mongoosejs.com/docs/populate.html#deep-populate
       */
       MixRefModel.find({})
                   .populate(populateQuery)

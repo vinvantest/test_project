@@ -6,6 +6,7 @@ var UserModel = require('../model/UserModel.js');
 var CommentModel = require('../model/CommentModel.js');
 var PostModel = require('../model/PostModel.js');
 var MixRefModel = require('../model/MixRefModel.js');
+var Pagnation = require('mongoose-sex-page');
 
 //console.log('Router Module - helper, Models and logger require complete');
 //logger.log('info', 'Inside Router Module - helper, logger & UserModel require statement completed');
@@ -918,7 +919,141 @@ server.get("/users_query", function(req, res, next)
                   });//end exec() of mixRef.find().populate
       });// GET mixRef ends
 
+      // GET http://localhost:8888/mixrefs/5987e4e959e37c1f340739e6 or
+      // GET http://localhost:8888/mixrefs/59811995001b3d31b43d8da2?first=Dummy&second=Tummy
+      // Get all mixrefs for userId
+      server.get("/mixrefs_paginate/:userId", function(req, res, next)
+      {
+        req.assert('userId', 'Id is required and must be numeric').notEmpty();
+        var errors = req.validationErrors();
+        if(errors)
+        {
+          helper.failure(res,next,errors[0],400);
+          return next();
+        }
+        logger.log('info', 'mixrefs_paginate ::: req.params.userId = ' + JSON.stringify(req.params.userId));
+        //get Query params
+        var queryParams = req.getQuery();//getQuery() returns string
+        logger.log('info', 'queryParams passed is -> {' + JSON.stringify(queryParams) + '} '
+                    + 'where first param is: ' + JSON.stringify(req.query.first)
+                    + 'second param is: ' + JSON.stringify(req.query.second)
+                    + 'third param is: ' + JSON.stringify(req.query.third)
+                  );
 
+        //you can loop in the query object
+        for(var field in req.query){
+          logger.log('info', 'Field['+field+'] = '+req.query[field]);
+        }//for loop end
+
+        UserModel.findById(req.params.userId, function (err, user)
+           {
+             if (err){
+               //logger.log('error', 'Error: User model.findOne() for userid -> ' + req.params.userId);
+               helper.failure(res, next, 'Something went wrong while fetching the user '
+                                          + req.params.userId
+                                          + ' from the database for the comment to be inserted in DB - '
+                                          + JSON.stringify(err), 500);
+               return next();
+             }
+             if (user === null){
+               //logger.log('error', 'Error: User model.findOne() returned null for the  userid -> ' + req.params.userId);
+               helper.failure(res, next, 'The specified user ' + req.params.userId +' could not be found to create comment', 404);
+               return next();
+             }
+             else {
+               logger.log('info', 'Exiting UserModel.find() as user is found = ' + JSON.stringify(req.params.userId));
+               return next();
+             }
+          });//end else of UserModel.findById()
+      }, //userModel find function of get ends
+      function(req, res, next) //next function to call once user is found i.e. find comments for the user
+      {
+
+      logger.log('info', 'Inside MixRefModel Pagination deepPopulate function for the user id = ' + JSON.stringify(req.params.userId));
+      /*var populateQuery = [{  path: 'commentsDataId',
+                              //select: 'commentString commentProfile postTitleRef',
+                              select: 'commentString',
+                              //match: { _id : req.params.commentsDataId }
+                              },
+                              { path: 'postsDataId',
+                                //select: 'postTitle postCatNumber postedBy',
+                                select: 'postTitle postedBy',
+                                populate: { path: 'postedBy', select: 'first_name career'},
+                                //match: { _id : req.params.postsDataId }
+                              }];*/
+                              /* del me
+                              PostSchema.plugin(deepPopulate,
+                                {
+                                  populate:
+                                  {
+                                  'comments.user': {select: 'name', options: {limit: 5}},
+                                  'approved.user': {select: 'name'}
+                                  }
+                                }
+                            );*/
+                                /*
+                              Pagnation(Foo)
+                                .find()
+                                .select('age')
+                                .page(1) // current page
+                                .size(10) // quantity per page
+                                .display(6) // the page number to display
+                                .sort({age: -1})
+                                .populate('foo')
+                                .exec()
+                                .then(function (result) {
+                                  // result.page current page
+                                  // result.pages page count
+                                  // result.total total record number
+                                  // result.records current page records
+                                  // result.size quantity per page
+                                  // result.display the page number to display
+                                })
+                                .catch(function (err) {
+                                  console.log(err)
+                                })*/
+      Pagnation(MixRefModel)
+        .find({})
+        .select('anyString anyUniqueString commentsDataId postsDataId') //this too works or don't provide .select() and it will just send all columns
+        .page(1) // current page
+        .size(3) // quantity per page
+        .display(2) // the page number to display
+        .sort({anyString: -1})
+        //.extend('deepPopulate', 'commentsDataId postsDataId') //this works but dosen't get nested children data it only displays _id of children
+        .extend('deepPopulate', 'commentsDataId postsDataId postsDataId.postedBy commentsDataId.commentedBy') //this too works but gets all columns in nested objects
+        //.extend('deepPopulate', 'commentsDataId postsDataId postsDataId.postedBy commentsDataId.commentedBy', populateQuery) //this doesn't work!!
+        //.extend('deepPopulate', populateQuery) //this too doesn't work!!
+        .exec()
+        .then(function (mixRef)
+        {
+          // result.page current page
+          // result.pages page count
+          // result.total total record number
+          // result.records current page records
+          // result.size quantity per page
+          // result.display the page number to display
+          logger.log('info', 'success in retrieveing all the comments for the userId '+ req.params.userId);
+          logger.log('info', '***** Mix Ref ********');
+          logger.log('info', JSON.stringify(mixRef));
+          helper.success(res, next, mixRef);
+          return next();
+        })
+        .catch(function (err)
+        {
+          if(err) {
+              console.log(err)
+              helper.failure(res, next, 'Something went wrong while fetching the comments from the database for the user  - ' + JSON.stringify(err), 500);
+              return next();
+          }
+        }).
+        finally(() =>
+        {
+          // Close db connection or node event loop won't exit , and lambda will timeout
+        console.log('Inside db.Once() and finally() closing connection to mongoDB');
+        //db.close();
+      });
+  }//#end 2nd function for pagination
+);// GET mixRef ends
 //----------- No function Codeing below this line ----------------
 
 }//router.js module.exports end

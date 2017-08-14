@@ -4,7 +4,8 @@ var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate-pages');
 var uniqueValidator = require('mongoose-unique-validator');
 var mongooseHistory = require('mongoose-history');
-//var UserModel = require('../model/UserModel.js');
+//var Pagnation = require('mongoose-sex-page')
+var deepPopulate = require('mongoose-deep-populate')(mongoose)
 
 var Schema = mongoose.Schema,
     ObjectId = Schema.ObjectId;
@@ -21,9 +22,11 @@ var MixRefModel = new Schema
     { runSettersOnQuery: true }
 );
 
+
 MixRefModel.plugin(mongoosePaginate);
 MixRefModel.plugin(uniqueValidator,{ message: 'Error - MixRefModel, api expects {PATH} to be unique.'});
 MixRefModel.plugin(mongooseHistory);
+MixRefModel.plugin(deepPopulate);
 
 var MixRefModel = mongoose.model('mixrefs', MixRefModel);
 

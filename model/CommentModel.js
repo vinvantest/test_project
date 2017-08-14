@@ -4,6 +4,7 @@ var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate-pages');
 var uniqueValidator = require('mongoose-unique-validator');
 var mongooseHistory = require('mongoose-history');
+var deepPopulate = require('mongoose-deep-populate')(mongoose)
 
 var Schema = mongoose.Schema,
     ObjectId = Schema.ObjectId;
@@ -25,6 +26,7 @@ var CommentModel = new Schema
 CommentModel.plugin(mongoosePaginate);
 CommentModel.plugin(uniqueValidator,{ message: 'Error - CommentModel, api expects {PATH} to be unique.'});
 CommentModel.plugin(mongooseHistory);
+CommentModel.plugin(deepPopulate);
 
 var CommentModel = mongoose.model('comments', CommentModel);
 

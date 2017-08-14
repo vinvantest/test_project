@@ -4,6 +4,7 @@ var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate-pages');
 var uniqueValidator = require('mongoose-unique-validator');
 var mongooseHistory = require('mongoose-history');
+var deepPopulate = require('mongoose-deep-populate')(mongoose)
 
 var Schema = mongoose.Schema,
     ObjectId = Schema.ObjectId;
@@ -23,6 +24,7 @@ var PostModel = new Schema
 PostModel.plugin(mongoosePaginate);
 PostModel.plugin(uniqueValidator,{ message: 'Error - PostModel, api expects {PATH} to be unique.'});
 PostModel.plugin(mongooseHistory);
+PostModel.plugin(deepPopulate);
 
 var PostModel = mongoose.model('posts', PostModel);
 

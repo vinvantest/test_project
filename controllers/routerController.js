@@ -1023,6 +1023,11 @@ server.get("/users_query", function(req, res, next)
         .extend('deepPopulate', 'commentsDataId postsDataId postsDataId.postedBy commentsDataId.commentedBy') //this too works but gets all columns in nested objects
         //.extend('deepPopulate', 'commentsDataId postsDataId postsDataId.postedBy commentsDataId.commentedBy', populateQuery) //this doesn't work!!
         //.extend('deepPopulate', populateQuery) //this too doesn't work!!
+        /*.extend('deepPopulate', {
+                                whitelist: [],
+                                populate: {'commentsDataId':{select: 'commentString'}},
+                                rewrite: {}
+               })*/ //doesn't work
         .exec()
         .then(function (mixRef)
         {

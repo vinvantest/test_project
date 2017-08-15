@@ -26,6 +26,7 @@ var dbURI = 'mongodb://dev1:test1234@ds127173.mlab.com:27173/buzrecdb';
 //logger.log('info', 'In DBConnection Module - opening mongoose connection');
 //mongoose.Promise = global.Promise;
 //const db = mongoose.createConnection(dbURI,function(error)
+mongoose.Promise = global.Promise;
 mongoose.connect(dbURI,function(error)
     {
         logger.log('info', "Mongoose open function done  " + mongoose.connection.host + " " + mongoose.connection.port);

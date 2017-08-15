@@ -9,6 +9,7 @@
   "author": "Vinayak Vanarse",
   "license": "ISC",
   "dependencies": {
+    "mongoosastic": "^4.3.0",
     "mongoose": "^4.11.5",
     "mongoose-deep-populate": "^3.0.0",
     "mongoose-history": "^0.4.2",

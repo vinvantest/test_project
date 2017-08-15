@@ -8,6 +8,13 @@ var PostModel = require('../model/PostModel.js');
 var MixRefModel = require('../model/MixRefModel.js');
 var Pagnation = require('mongoose-sex-page');
 
+var mongoose = require('mongoose');
+var ObjectId     = mongoose.Types.ObjectId;
+var UserXModel = require('../model/UserXModel.js');
+var StoreModel = require('../model/StoreModel.js');
+var ProductModel = require('../model/ProductModel.js');
+var PriceModel = require('../model/PriceModel.js');
+
 //console.log('Router Module - helper, Models and logger require complete');
 //logger.log('info', 'Inside Router Module - helper, logger & UserModel require statement completed');
 
@@ -15,7 +22,8 @@ var Pagnation = require('mongoose-sex-page');
 //var users = {};
 //var max_user_id = 0;
 
-module.exports = function(server) {
+module.exports = function(server)
+{
 
     // Get http://localhost:8888/ - do not return all values. Client has to send pagination parameters
     server.get("/", function(req, res, next)
@@ -1012,6 +1020,8 @@ server.get("/users_query", function(req, res, next)
                                 .catch(function (err) {
                                   console.log(err)
                                 })*/
+
+                                //mongoosastic-fixbug
       Pagnation(MixRefModel)
         .find({})
         .select('anyString anyUniqueString commentsDataId postsDataId') //this too works or don't provide .select() and it will just send all columns
@@ -1025,7 +1035,7 @@ server.get("/users_query", function(req, res, next)
         //.extend('deepPopulate', populateQuery) //this too doesn't work!!
         /*.extend('deepPopulate', {
                                 whitelist: [],
-                                populate: {'commentsDataId':{select: 'commentString'}},
+                                populate: {'commentsDataId': {select: 'commentString'}},
                                 rewrite: {}
                })*/ //doesn't work
         .exec()
@@ -1059,6 +1069,239 @@ server.get("/users_query", function(req, res, next)
       });
   }//#end 2nd function for pagination
 );// GET mixRef ends
+
+/****************************************
+*
+*   Trying if nested model calls work
+*
+******************************************/
+
+// curl -X POST -H "Content-Type: application/json" -d '{"name": "Sérgio Lima", "email": "sergio@lima.com", "city": "Brasília"}' http://localhost:3000/users
+server.post("/user_x", function(req, res, next) {
+  var userX = new UserXModel();
+  userX.name = req.params.name;
+  userX.email = req.params.email;
+  userX.city = req.params.city;
+  userX.save(function(err, userX)
+  {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while POSTING UserXModel - ' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('userX saved');
+    //res.json({'message': 'user saved!', userX});
+    /*
+    userX.on('es-indexed', function(err)
+    {
+          if (err)  {
+          console.log(err);
+          helper.failure(res, next, 'Something went wrong while Indexing in Elastic UserXModel - ' + JSON.stringify(err), 500);
+          return next();
+          }
+          console.log('userX indexed .. sending response');
+    });
+    */
+    helper.success(res, next, userX);
+    return next();
+    });
+  });
+
+server.get("/users_x", function(req, res, next) {
+  UserXModel.find({}, function(err, userXs) {
+    //if (err) throw err;
+    //res.json(users);
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while get UserXModel - ' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('userXs retreived from DB');
+    //res.json({'message': 'user saved!', userX});
+    helper.success(res, next, userXs);
+    return next();
+  });
+});
+
+
+// curl -X POST -H "Content-Type: application/json" -d '{"name": "Umami Presentes", "local": "Brasília"}' http://localhost:3000/stores
+server.post("/stores", function(req, res, next) {
+  var store = new StoreModel();
+  store.name = req.params.name;
+  store.local = req.params.local;
+  store.save(function(err, store)
+  {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while Posting Store -' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('store saved');
+    //res.json({'message': 'store saved!', store});
+    helper.success(res, next, store);
+    return next();
+  });
+});
+
+server.get("/stores", function(req, res, next) {
+  StoreModel.find({}, function(err, stores) {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while Posting Store -' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('store retreived from database');
+    //res.json({'message': 'store saved!', store});
+    helper.success(res, next, stores);
+    return next();
+  });
+});
+
+
+// curl -X POST -H "Content-Type: application/json" -d '{"description": "Frigideira Rasa Non Stick 28cm Le Creuset", "brand": "Le Creuset", "type": "Frying pan", "category": "Cooking", "picture": "http://shopfacil.vteximg.com.br/arquivos/ids/1783992-1000-1000/Frigideira-Le-Creuset-Rasa-28-cm-Non-Stick_0.jpg"}' http://localhost:3000/products
+server.post("/products", function(req, res, next) {
+  var product = new ProductModel();
+  product.description = req.params.description;
+  product.brand = req.params.brand;
+  product.category = req.params.category;
+  product.type = req.params.type;
+  product.picture = req.params.picture;
+  product.save(function(err, product) {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while Posting product -' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('product saved');
+    //res.json({'message': 'product saved!', product});
+    helper.success(res, next, product);
+    return next();
+  });
+});
+
+server.get("/products", function(req, res, next) {
+  ProductModel.find({}, function(err, products) {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while get products -' + JSON.stringify(err), 500);
+    return next();
+    }
+    console.log('products retreived from database');
+    //res.json({'message': 'store saved!', store});
+    helper.success(res, next, products);
+    return next();
+  });
+});
+
+
+// curl -X POST -H "Content-Type: application/json" -d '{"products":"57fea3e9cf0da90097b1ee56", "stores": "57fea28c86137300630fec8a", "price": 100}' http://localhost:3000/prices
+server.post("/prices", function(req, res, next)
+{
+  ProductModel.findById(req.params.products, function(err, product)
+  {
+    if (err) {
+    console.log(err);
+    helper.failure(res, next, 'Something went wrong while ProductModel.findById() product -' + JSON.stringify(req.params.products)+ JSON.stringify(err), 500);
+    return next();
+    }
+    if (product != null)
+    {
+      console.log('product is not null so now retrieveing store ->' + JSON.stringify(req.params.products));
+      StoreModel.findById(req.params.stores, function(err, store)
+      {
+        if (err) {
+        console.log(err);
+        helper.failure(res, next, 'Something went wrong while StoreModel.findById() store -' + JSON.stringify(req.params.stores)+ JSON.stringify(err), 500);
+        return next();
+        }
+        if (store != null)
+        {
+          console.log('store is not null so now creating price model ->' + JSON.stringify(req.params.stores));
+          var priceObj = new PriceModel();
+            priceObj.price = req.params.price;
+            priceObj.products = req.params.products;
+            priceObj.stores = req.params.stores;
+          console.log(JSON.stringify(priceObj));
+          priceObj.save(function(err, priceObj)
+          {
+            if (err) {
+            console.log(err);
+            helper.failure(res, next, 'Something went wrong while saving [PriceModel].save() -' + JSON.stringify(err), 500);
+            return next();
+            }
+            console.log('priceObj saved');
+            /*
+            priceObj.on('es-indexed', function(err)
+            {
+              if (err) {
+              console.log(err);
+              helper.failure(res, next, 'Something went wrong while indexing [PriceModel].save() -' + JSON.stringify(err), 500);
+              return next();
+              }
+              console.log('priceObj indexed');
+            });
+            */
+            helper.success(res, next, priceObj);
+            return next();
+            //res.json({'message': 'price saved!', result});
+            //price.on('es-indexed', function(err) {
+            //  if (err) throw err;
+            //  console.log('price indexed');
+            });
+          }
+          else
+          {
+            //res.send("store not found");
+            helper.failure(res, next, 'store not found', 500);
+            return next();
+          }
+        }
+      ); //end storeModel.findById()
+    }
+    else
+    {
+      //res.send("product not found");
+      helper.failure(res, next, 'product not found', 500);
+      return next();
+    }
+
+  }); //end ProductModel.findById()
+
+  }//post function body ends
+);//server.post ends
+
+
+server.get("/prices", function(req, res, next) {
+  PriceModel.find({})
+    .populate('stores products')
+    .exec(function(err, prices) {
+      if (err) {
+      console.log(err);
+      helper.failure(res, next, 'Something went wrong while populate [PriceModel].find().populate() -' + JSON.stringify(err), 500);
+      return next();
+      }
+      console.log('prices retreived from database');
+      helper.success(res, next, prices);
+      return next();
+    });
+});
+
+/**/
+/*
+server.get('/search', function(req, res, next) {
+  PriceModel.search({query_string: {query: req.query.q}}, function(err, results) {
+          if (err) {
+          console.log(err);
+          helper.failure(res, next, 'Something went wrong while ES search [PriceModel].find().populate() -' + JSON.stringify(err), 500);
+          return next();
+          }
+          console.log('prices retreived from ELASTICSEARCH_URL');
+          helper.success(res, next, results);
+          return next();
+  });
+});
+*/
+
 //----------- No function Codeing below this line ----------------
 
 }//router.js module.exports end

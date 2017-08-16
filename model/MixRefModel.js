@@ -4,8 +4,8 @@ var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate-pages');
 var uniqueValidator = require('mongoose-unique-validator');
 var mongooseHistory = require('mongoose-history');
-//var Pagnation = require('mongoose-sex-page')
-var deepPopulate = require('mongoose-deep-populate')(mongoose)
+//var Pagnation = require('mongoose-sex-page');
+var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 var Schema = mongoose.Schema,
     ObjectId = Schema.ObjectId;

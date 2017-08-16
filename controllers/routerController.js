@@ -1221,6 +1221,7 @@ server.post("/prices", function(req, res, next)
             priceObj.price = req.params.price;
             priceObj.products = req.params.products;
             priceObj.stores = req.params.stores;
+            priceObj.pricePoint = req.params.pricePoint;
           console.log(JSON.stringify(priceObj));
           priceObj.save(function(err, priceObj)
           {
@@ -1285,6 +1286,49 @@ server.get("/prices", function(req, res, next) {
       return next();
     });
 });
+
+//http://localhost:8888/prices_paginate?pageNumber=1&sizeLimit=17&displayPage=1&sortBy=pricePoint
+server.get("/prices_paginate", function(req, res, next)
+{
+  let pageNumber = req.query.pageNumber;
+  let sizeLimit = req.query.sizeLimit;
+  let displayPage = req.query.displayPage;
+  let sortBy = req.query.sortBy;
+
+  Pagnation(PriceModel)
+    .find({})
+    .select('products stores pricePoint price') //this too works or don't provide .select() and it will just send all columns
+
+    .page(parseInt(pageNumber)) // current page ... if PageNumber is greater than records in DB then empty results is returned.
+    .size(parseInt(sizeLimit)) // quantity per page
+    .display(parseInt(displayPage)) // the page number to display
+    .sort({pricePoint: -1})
+    /*
+    .page(1) // current page ... if PageNumber is greater than records in DB then empty results is returned.
+    .size(2) // quantity per page
+    .display(1) // the page number to display
+    .sort({pricePoint: -1})
+    */
+    .extend('deepPopulate', 'products stores') // ' /* if in case products/stores had further children*/ products.postedBy stores.commentedBy') //this too works but gets all columns in nested objects
+    .exec()
+    .then(function (prices) {
+      console.log('prices retreived from database');
+      helper.success(res, next, prices);
+      return next();
+    })
+    .catch(function(err){
+      if(err) {
+          console.log(err)
+          helper.failure(res, next, 'Something went wrong while fetching the pagination PriceModel from the database -' + JSON.stringify(err), 500);
+          return next();
+      }
+    })
+    .finally(() =>
+    {
+      console.log('reached finally so now exiting');
+    });
+  });
+
 
 /**/
 /*

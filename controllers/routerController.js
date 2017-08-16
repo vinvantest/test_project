@@ -1231,7 +1231,7 @@ server.post("/prices", function(req, res, next)
             return next();
             }
             console.log('priceObj saved');
-            /*
+
             priceObj.on('es-indexed', function(err)
             {
               if (err) {
@@ -1241,7 +1241,7 @@ server.post("/prices", function(req, res, next)
               }
               console.log('priceObj indexed');
             });
-            */
+
             helper.success(res, next, priceObj);
             return next();
             //res.json({'message': 'price saved!', result});
@@ -1330,13 +1330,13 @@ server.get("/prices_paginate", function(req, res, next)
   });
 
 
-/**/
-/*
-server.get('/search', function(req, res, next) {
-  PriceModel.search({query_string: {query: req.query.q}}, function(err, results) {
+server.get('/search_prices', function(req, res, next)
+{
+  PriceModel.search({query_string: {query: req.query.q}}, function(err, results)
+  {
           if (err) {
           console.log(err);
-          helper.failure(res, next, 'Something went wrong while ES search [PriceModel].find().populate() -' + JSON.stringify(err), 500);
+          helper.failure(res, next, 'Something went wrong while ES search [PriceModel].search-' + JSON.stringify(err), 500);
           return next();
           }
           console.log('prices retreived from ELASTICSEARCH_URL');
@@ -1344,7 +1344,6 @@ server.get('/search', function(req, res, next) {
           return next();
   });
 });
-*/
 
 //----------- No function Codeing below this line ----------------
 

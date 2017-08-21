@@ -30,7 +30,9 @@ PriceSchema.plugin(deepPopulate);
 PriceSchema.plugin(mongoosastic, {
   hosts: ['https://4e63bcdd9a8f759833dc274a950eea17.ap-southeast-2.aws.found.io:9243'],
   //process.env.ELASTICSEARCH_URL, //	https://4e63bcdd9a8f759833dc274a950eea17.ap-southeast-2.aws.found.io:9243
-  auth: 'vinvan_pict@yahoo.com:gnNCK6c62EgAUMtZpWfDxRyP',
+  //auth: 'vinvan_pict@yahoo.com:gnNCK6c62EgAUMtZpWfDxRyP',
+  //httpAuth: 'elastic:gZnBSLQ5i1PWWWQJH2CZAVGL',
+  httpAuth: 'vinvan_test:test1234',
   populate: [
     {path: 'products', select: 'description brand category type'},
     {path: 'stores', select: 'name local'}
@@ -49,9 +51,12 @@ PriceModel.createMapping(function (err,mapping) {
       }else{
         console.log('PriceModel mapping created!');
         console.log(mapping);
+        doTheNextThing();
         }
     });
 
+
+function doTheNextThing () {
     var stream = PriceModel.synchronize();
     var count = 0;
 
@@ -65,3 +70,4 @@ PriceModel.createMapping(function (err,mapping) {
 
     stream.on('error', function(){
     });
+  }
